@@ -147,6 +147,7 @@ Integrates with [`canvas-wasi`](https://github.com/breeze833/canvas-wasi) via `<
 - `canvas_clear_rect(float x, float y, float w, float h)` and `canvas_fill_rect(...)` manage canvas clearing.
 - `canvas_begin_path()`, `canvas_move_to(...)`, `canvas_line_to(...)`, `canvas_set_stroke_style(...)`, `canvas_set_line_width(...)`, `canvas_set_line_cap("round")`, and `canvas_stroke()` render vector line segments.
 - `canvas_present()` commits/presents the rendered frame to the browser host.
+- In `hal_turtle_present()`, run an interactive waiting loop `while (!graphics_should_close() && !graphics_is_key_down(27))` paced with `graphics_wait_frame(60)` until window close or ESC is pressed.
 - `graphics_wait_frame(int target_fps)` paces progressive execution in `hal_turtle_delay()` based on requested millisecond delay (`1000.0 / ms`).
 - Cursor visualization uses localized pixel snapshots (`canvas_get_image_data`) and restoration (`canvas_put_image_data`) before subsequent line drawing, ensuring the turtle indicator does not corrupt canvas art.
 - `graphics_close()` releases graphics resources.

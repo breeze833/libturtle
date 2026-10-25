@@ -127,6 +127,7 @@
 
   <div class="controls">
     <button id="restart-btn">Restart Animation</button>
+    <button id="close-btn" style="background: #475569; color: #f8fafc;">Close / Exit (ESC)</button>
   </div>
 
   <script type="module">
@@ -134,11 +135,45 @@
     const statusText = document.getElementById("status-text");
     const statusDot = document.getElementById("status-dot");
     const restartBtn = document.getElementById("restart-btn");
+    const closeBtn = document.getElementById("close-btn");
 
     let worker = null;
+    let controlArray = null;
+
+    if (typeof SharedArrayBuffer !== "undefined") {
+      try {
+        controlArray = new Int32Array(new SharedArrayBuffer(1024));
+      } catch (e) {
+        controlArray = null;
+      }
+    }
+
+    function terminateSession(reason) {
+      if (controlArray) {
+        controlArray[0] = 1;
+        controlArray[27] = 1;
+      }
+      if (worker) {
+        worker.postMessage({ type: "close" });
+        worker.postMessage({ type: "keydown", keyCode: 27 });
+        /* Allow WASM cleanup briefly; terminate if it doesn't close promptly */
+        setTimeout(() => {
+          if (worker) {
+            worker.terminate();
+            worker = null;
+            statusText.textContent = reason || "Session terminated (ESC / Close)";
+            statusDot.style.background = "#94a3b8";
+          }
+        }, 100);
+      }
+    }
 
     function startWorker() {
       if (worker) worker.terminate();
+
+      if (controlArray) {
+        controlArray.fill(0);
+      }
 
       statusText.textContent = "Loading WASM module...";
       statusDot.style.background = "#38bdf8";
@@ -148,6 +183,10 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       worker = new Worker("./worker.js", { type: "module" });
+
+      if (controlArray) {
+        worker.postMessage({ type: "init_control", buffer: controlArray.buffer });
+      }
 
       worker.onmessage = (e) => {
         const { type, bitmap, width, height, title } = e.data;
@@ -162,8 +201,12 @@
           ctx.drawImage(bitmap, 0, 0);
           bitmap.close();
         } else if (type === "close") {
-          statusText.textContent = "Animation finished (Ready)";
+          statusText.textContent = "Session closed (ESC / Window Close)";
           statusDot.style.background = "#94a3b8";
+          if (worker) {
+            worker.terminate();
+            worker = null;
+          }
         }
       };
 
@@ -174,7 +217,31 @@
       };
     }
 
+    window.addEventListener("keydown", (e) => {
+      const code = e.keyCode || (e.key === "Escape" ? 27 : 0);
+      if (controlArray && code < controlArray.length) {
+        controlArray[code] = 1;
+      }
+      if (worker) {
+        worker.postMessage({ type: "keydown", keyCode: code });
+      }
+      if (code === 27) {
+        terminateSession("Session terminated (ESC key pressed)");
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      const code = e.keyCode || (e.key === "Escape" ? 27 : 0);
+      if (controlArray && code < controlArray.length) {
+        controlArray[code] = 0;
+      }
+      if (worker) {
+        worker.postMessage({ type: "keyup", keyCode: code });
+      }
+    });
+
     restartBtn.addEventListener("click", startWorker);
+    closeBtn.addEventListener("click", () => terminateSession("Session closed by user"));
     startWorker();
   </script>
 </body>

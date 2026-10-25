@@ -3,6 +3,25 @@
 let wasmMemory = null;
 let offscreen = null;
 let ctx = null;
+let controlArray = null;
+let shouldClose = 0;
+const keysDown = new Uint8Array(256);
+
+self.onmessage = (e) => {
+  if (e.data.type === "init_control") {
+    controlArray = new Int32Array(e.data.buffer);
+  } else if (e.data.type === "close") {
+    shouldClose = 1;
+  } else if (e.data.type === "keydown") {
+    if (e.data.keyCode >= 0 && e.data.keyCode < 256) {
+      keysDown[e.data.keyCode] = 1;
+    }
+  } else if (e.data.type === "keyup") {
+    if (e.data.keyCode >= 0 && e.data.keyCode < 256) {
+      keysDown[e.data.keyCode] = 0;
+    }
+  }
+};
 
 function readString(ptr) {
   if (!wasmMemory) return "";
@@ -130,6 +149,16 @@ const env = {
   },
   graphics_close: () => {
     self.postMessage({ type: "close" });
+  },
+  graphics_should_close: () => {
+    if (controlArray && controlArray[0]) return 1;
+    return shouldClose ? 1 : 0;
+  },
+  graphics_is_key_down: (key) => {
+    if (controlArray && key >= 0 && key < controlArray.length) {
+      return controlArray[key] ? 1 : 0;
+    }
+    return (key >= 0 && key < 256) ? (keysDown[key] ? 1 : 0) : 0;
   }
 };
 

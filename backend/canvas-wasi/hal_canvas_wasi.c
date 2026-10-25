@@ -16,6 +16,8 @@
 #define RGBA_B(c) (((c) >> 8)  & 0xFF)
 #define RGBA_A(c) ((c)         & 0xFF)
 
+#define KEY_ESCAPE 27
+
 static bool g_initialized = false;
 static int g_width = 800;
 static int g_height = 600;
@@ -241,6 +243,11 @@ void hal_turtle_present(void) {
         draw_cursor_and_backup();
     }
     canvas_present();
+
+    /* Interactive display loop until window close or ESC key */
+    while (!graphics_should_close() && !graphics_is_key_down(KEY_ESCAPE)) {
+        graphics_wait_frame(60);
+    }
 }
 
 void hal_turtle_delay(double ms) {
