@@ -6,6 +6,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -250,9 +252,22 @@ void hal_turtle_present(void) {
     }
 }
 
+static inline double hal_get_time(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
+}
+
 void hal_turtle_delay(double ms) {
     if (!g_initialized) return;
 
+    /* 1. Fast exit if already closed */
+    if (graphics_should_close()) {
+        hal_turtle_destroy();
+        exit(0);
+    }
+
+    /* 2. Present frame with cursor and restore canvas under cursor */
     restore_canvas_under_cursor();
     if (g_cursor_visible) {
         draw_cursor_and_backup();
@@ -260,23 +275,35 @@ void hal_turtle_delay(double ms) {
     canvas_present();
     restore_canvas_under_cursor();
 
-    if (ms > 0.0) {
-        if (ms <= 1000.0) {
-            int target_fps = (int)(1000.0 / ms);
-            if (target_fps <= 0) target_fps = 1;
-            graphics_wait_frame(target_fps);
-        } else {
-            int seconds = (int)(ms / 1000.0);
-            for (int i = 0; i < seconds; i++) {
-                graphics_wait_frame(1);
-            }
-            double rem = ms - (seconds * 1000.0);
-            if (rem > 0.0) {
-                int rem_fps = (int)(1000.0 / rem);
-                if (rem_fps <= 0) rem_fps = 1;
-                graphics_wait_frame(rem_fps);
-            }
+    if (ms <= 0.0) {
+        if (graphics_should_close()) {
+            hal_turtle_destroy();
+            exit(0);
         }
+        return;
+    }
+
+    /* 3. Pacing loop */
+    double duration = ms / 1000.0;
+    double start = hal_get_time();
+
+    while (!graphics_should_close()) {
+        double elapsed = hal_get_time() - start;
+        double remaining = duration - elapsed;
+        if (remaining <= 0.001) {
+            break;
+        }
+
+        /* Sleep in short frame slices (up to 60 FPS / ~16ms) so close/ESC is sampled promptly */
+        int slice_fps = (remaining < 0.016) ? (int)(1.0 / remaining) : 60;
+        if (slice_fps <= 0) slice_fps = 60;
+        graphics_wait_frame(slice_fps);
+    }
+
+    /* 4. If loop exited due to close request, destroy and exit */
+    if (graphics_should_close()) {
+        hal_turtle_destroy();
+        exit(0);
     }
 }
 

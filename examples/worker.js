@@ -38,6 +38,13 @@ const wasi_snapshot_preview1 = {
   proc_exit: (code) => {
     console.log("[WASI] Process exited with code:", code);
   },
+  clock_time_get: (clock_id, precision, time_ptr) => {
+    const nowMs = performance.now();
+    const nsec = BigInt(Math.floor(nowMs * 1e6));
+    const view = new DataView(wasmMemory.buffer);
+    view.setBigUint64(time_ptr, nsec, true);
+    return 0; // __WASI_ERRNO_SUCCESS
+  },
   fd_write: (fd, iovs, iovs_len, nwritten_ptr) => {
     const view = new DataView(wasmMemory.buffer);
     let totalWritten = 0;
