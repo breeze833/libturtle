@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <math.h>
 
 #define RGBA_R(c) (((c) >> 24) & 0xFF)
@@ -207,8 +208,17 @@ static void render_screen(void) {
 void hal_turtle_delay(double ms) {
     if (!g_initialized) return;
 
+    if (WindowShouldClose()) {
+        hal_turtle_destroy();
+        exit(0);
+    }
+
     if (ms <= 0.0) {
         render_screen();
+        if (WindowShouldClose()) {
+            hal_turtle_destroy();
+            exit(0);
+        }
         return;
     }
 
@@ -239,6 +249,11 @@ void hal_turtle_delay(double ms) {
             PollInputEvents();
             break;
         }
+    }
+
+    if (WindowShouldClose()) {
+        hal_turtle_destroy();
+        exit(0);
     }
 }
 
