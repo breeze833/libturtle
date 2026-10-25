@@ -18,8 +18,8 @@ A cross-platform, modular educational C turtle graphics library designed for com
 - 🐢 **Stylized Turtle Indicator**: Visual position and direction cursor with carapace, flippers, head, and eyes enabled by default, toggled with `turtle_set_visible(bool)`.
 - 🎨 **Packed 32-bit RGBA Colors**: Palette macros (`TURTLE_RED`, `TURTLE_BLUE`, etc.) and customizable `TURTLE_RGBA(r, g, b, a)`.
 - 🔌 **Pluggable Backends**:
-  - **Raylib Desktop Backend (`raylib`)**: Native desktop window with configurable target FPS, dynamic pacing, and hardware-accelerated persistence via `RenderTexture2D`.
-  - **Canvas WASI Backend (`canvas-wasi`)**: Zero-dependency browser-hosted WebAssembly module driving HTML5 Canvas via [canvas-wasi](https://github.com/breeze833/canvas-wasi) with non-destructive cursor snapshot and restore.
+  - **Raylib Desktop Backend (`raylib`)**: Native desktop window with configurable target FPS, dynamic pacing, prompt exit on window close during delay, and hardware-accelerated persistence via `RenderTexture2D`.
+  - **Canvas WASI Backend (`canvas-wasi`)**: Zero-dependency browser-hosted WebAssembly module driving HTML5 Canvas via [canvas-wasi](https://github.com/breeze833/canvas-wasi) with non-destructive cursor snapshot and restore, monotonic clock frame slicing, and interactive loop support.
 - 🎓 **Pedagogical Design**: Core primitives are minimal and robust; higher-level routines like `turtle_goto()` and `turtle_backward()` are deliberately reserved as student programming assignments.
 
 ---
@@ -94,7 +94,7 @@ make run BACKEND=canvas-wasi
 Open your browser to:
 👉 **[http://localhost:8000/examples/](http://localhost:8000/examples/)**
 
-You will see the turtle progressively drawing in real-time onto an HTML5 `<canvas>` inside a Web Worker.
+You will see the turtle progressively drawing in real-time onto an HTML5 `<canvas>` inside a Web Worker, with interactive controls to restart or exit (ESC).
 
 ---
 
@@ -142,7 +142,7 @@ int main(void) {
         turtle_delay(100.0);
     }
 
-    turtle_end(); // Keeps desktop window open or finalizes web frame
+    turtle_end(); // Keeps desktop window or browser canvas open in interactive event loop
     return 0;
 }
 ```
@@ -155,10 +155,10 @@ int main(void) {
 | Function | Description |
 |---|---|
 | `bool turtle_begin(void *context)` | Initializes graphics backend and resets turtle to home `(0, 0)`. |
-| `void turtle_end(void)` | Enters window event loop (Raylib) or finalizes canvas state (WASI). |
+| `void turtle_end(void)` | Enters interactive event loop (Raylib & WASI) until closed or ESC pressed, then cleans up resources. |
 | `void turtle_clear(uint32_t color)` | Clears viewport with packed RGBA color. |
 | `void turtle_home(void)` | Returns turtle to `(0, 0)` with heading reset to $90.0^\circ$ (North). |
-| `void turtle_delay(double ms)` | Flushes canvas and pauses for `ms` milliseconds for progressive drawing. |
+| `void turtle_delay(double ms)` | Flushes canvas and pauses for `ms` milliseconds for progressive drawing while handling window close / exit promptly. |
 
 ### Steering & Movement
 | Function | Description |

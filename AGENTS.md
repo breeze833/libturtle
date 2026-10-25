@@ -62,12 +62,13 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 4. **Raylib Persistence & Timing:**
    - In `backend/raylib/hal_raylib.c`, avoid redrawing line primitives every frame inside the main loop. Draw permanently onto a `RenderTexture2D` during `hal_turtle_draw_line()`, and render that texture during `hal_turtle_present()`.
    - Render the stylized turtle cursor as a non-destructive overlay on the display framebuffer during presentation.
-   - In `hal_turtle_delay()`, dynamically respect the configured `target_fps` by timing frames and sleeping sub-frame remainders with `WaitTime()` and `PollInputEvents()`. Do not assume a fixed 60 FPS.
+   - In `hal_turtle_delay()`, dynamically respect the configured `target_fps` by timing frames and sleeping sub-frame remainders with `WaitTime()` and `PollInputEvents()`. Do not assume a fixed 60 FPS. Clean up resources and exit promptly if window close is requested during the delay.
 
 5. **canvas-wasi Integration:**
    - In `backend/canvas-wasi/hal_canvas_wasi.c`, implement the HAL using `<graphics_canvas.h>` and `<graphics.h>`.
    - The required headers are synced at build-time from `breeze833/canvas-wasi` via the Makefile.
-   - In `hal_turtle_delay()`, pace frames using `graphics_wait_frame()` calculated from the requested delay (`1000.0 / ms`).
+   - In `hal_turtle_delay()`, pace frames using a monotonic clock loop sliced into short frame intervals (up to 60 FPS / ~16ms) with `graphics_wait_frame()`, polling `graphics_should_close()` for prompt termination. Clean up resources and exit promptly if window close is requested.
+   - In `hal_turtle_present()`, run an interactive waiting loop `while (!graphics_should_close() && !graphics_is_key_down(27))` paced with `graphics_wait_frame(60)` until window close or ESC is pressed.
    - Manage cursor visibility by non-destructively snapshotting (`canvas_get_image_data`) and restoring (`canvas_put_image_data`) the canvas area under the cursor before subsequent line draws.
 
 ---

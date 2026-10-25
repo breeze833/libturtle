@@ -43,7 +43,7 @@ Colors are packed 32-bit RGBA integer values (`0xRRGGBBAA`):
   - Queries physical viewport dimensions from HAL.
   - Resets turtle state to home (`(0, 0)`, heading $90^\circ$, pen down, black, stroke 2.0).
 - `void turtle_end(void);`
-  - Flushes graphics, enters interactive window loop (Raylib), or finalizes canvas state (WASI).
+  - Flushes graphics, enters interactive window/event loop (Raylib and WASI) until closed or ESC is pressed.
   - Cleans up allocated graphics resources.
 - `void turtle_clear(uint32_t color);`
   - Clears entire viewport with the specified RGBA color.
@@ -51,7 +51,7 @@ Colors are packed 32-bit RGBA integer values (`0xRRGGBBAA`):
   - Returns turtle position to `(0, 0)` with heading reset to $90.0^\circ$.
 - `void turtle_delay(double ms);`
   - Flushes and presents the canvas so intermediate actions are immediately visible.
-  - Pauses execution for `ms` milliseconds to enable progressive drawing and animation while maintaining interactive responsiveness.
+  - Pauses execution for `ms` milliseconds to enable progressive drawing and animation while maintaining interactive responsiveness. Promptly exits and cleans up resources if window close is requested during the delay.
 
 ### 3.3 Navigation & Steering
 - `void turtle_forward(double steps);`
@@ -126,7 +126,7 @@ typedef struct {
 * Allocate an offscreen `RenderTexture2D` matching window dimensions during `hal_turtle_init`.
 * Draw lines directly to the `RenderTexture2D` canvas buffer so previous strokes persist across frames.
 * Render the stylized turtle cursor as a non-destructive overlay on the display framebuffer during presentation, keeping the persistent canvas pristine.
-* In `hal_turtle_delay()`, delay intervals dynamically respect the configured `target_fps` by timing frames and sleeping sub-frame remainders with `WaitTime()` and `PollInputEvents()`.
+* In `hal_turtle_delay()`, delay intervals dynamically respect the configured `target_fps` by timing frames and sleeping sub-frame remainders with `WaitTime()` and `PollInputEvents()`. If window close is requested before or during the delay, resources are cleaned up and the process exits.
 * In `hal_turtle_present()`, run `while (!WindowShouldClose())` loop drawing the texture and cursor to the primary framebuffer.
 
 ### 5.2 Canvas WASI Backend (`backend/canvas-wasi/`)
@@ -148,9 +148,11 @@ Integrates with [`canvas-wasi`](https://github.com/breeze833/canvas-wasi) via `<
 - `canvas_begin_path()`, `canvas_move_to(...)`, `canvas_line_to(...)`, `canvas_set_stroke_style(...)`, `canvas_set_line_width(...)`, `canvas_set_line_cap("round")`, and `canvas_stroke()` render vector line segments.
 - `canvas_present()` commits/presents the rendered frame to the browser host.
 - In `hal_turtle_present()`, run an interactive waiting loop `while (!graphics_should_close() && !graphics_is_key_down(27))` paced with `graphics_wait_frame(60)` until window close or ESC is pressed.
-- `graphics_wait_frame(int target_fps)` paces progressive execution in `hal_turtle_delay()` based on requested millisecond delay (`1000.0 / ms`).
+- In `hal_turtle_delay()`, progressive execution is paced using a monotonic clock loop (`clock_gettime(CLOCK_MONOTONIC)`) sliced into short frame intervals (up to 60 FPS / ~16ms) with `graphics_wait_frame(slice_fps)` while polling `graphics_should_close()`. If window close or ESC is requested, resources are cleaned up and the process exits immediately.
 - Cursor visualization uses localized pixel snapshots (`canvas_get_image_data`) and restoration (`canvas_put_image_data`) before subsequent line drawing, ensuring the turtle indicator does not corrupt canvas art.
 - `graphics_close()` releases graphics resources.
+* **Host Web Worker Bridge:**
+The host Web Worker environment (`examples/worker.js`) provides minimal WASI Preview 1 imports including `clock_time_get` for monotonic timing, and maps interactive input events (ESC key, window close) into WASI host graphics calls (`graphics_should_close`, `graphics_is_key_down`).
 * **Header Synchronization:**
 The required headers `graphics.h` and `graphics_canvas.h` are downloaded at build-time from the upstream `canvas-wasi` repository into `backend/canvas-wasi/include/`, with support for a local directory override via `CANVAS_WASI_DIR`.
 
@@ -161,8 +163,8 @@ The required headers `graphics.h` and `graphics_canvas.h` are downloaded at buil
 ## 6. Build & Packaging Requirements
 
 * Static build-time dispatch selected via `make BACKEND=<type>`:
-* `make BACKEND=raylib` $\to$ builds `libturtle_raylib.a`
-* `make BACKEND=canvas-wasi` $\to$ builds `libturtle_canvas-wasi.a`
+* `make BACKEND=raylib` $\to$ builds `build/raylib/libturtle_raylib.a`
+* `make BACKEND=canvas-wasi` $\to$ builds `build/canvas-wasi/libturtle_canvas-wasi.a`
 
 
 * Single compilation unit output per backend combining `turtle.c` and `backend/<type>/hal_<type>.c`.
