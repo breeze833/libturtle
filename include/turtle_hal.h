@@ -10,9 +10,11 @@
  * Coordinates passed to HAL are in physical screen space (origin at top-left).
  */
 
-/* Initialize the graphics context/window.
- * Must set *width and *height so turtle.c can calculate math center (0,0). */
-bool hal_turtle_init(void *context, double *out_width, double *out_height);
+/* Initialize the graphics context/window */
+bool hal_turtle_init(void *context);
+
+/* Query current viewport/canvas dimensions */
+void hal_turtle_get_canvas_size(double *out_width, double *out_height);
 
 /* Finalize, flush buffer, or present frame */
 void hal_turtle_present(void);

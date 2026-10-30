@@ -17,8 +17,13 @@
 #define TURTLE_CYAN    TURTLE_RGBA(0,   255, 255, 255)
 #define TURTLE_WHITE   TURTLE_RGBA(255, 255, 255, 255)
 
-/* Lifecycle & Canvas Control */
-bool turtle_begin(void *context);
+/* Lifecycle & Canvas Control
+ * Note: High-level programs initialize via the function-like macro turtle_begin(context),
+ * which is provided by the corresponding backend header (e.g. turtle_backend_raylib.h
+ * or turtle_backend_canvas_wasi.h). The macro calls the backend-specific initializer
+ * to guarantee link-time backend resolution, followed by turtle_begin_core().
+ */
+bool turtle_begin_core(void);
 void turtle_end(void);
 void turtle_clear(uint32_t color);
 void turtle_home(void);

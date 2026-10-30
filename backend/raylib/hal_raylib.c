@@ -22,7 +22,20 @@ static double g_cursor_y = 0.0;
 static double g_cursor_heading = 90.0;
 static bool g_cursor_visible = true;
 
-bool hal_turtle_init(void *context, double *out_width, double *out_height) {
+bool raylib_turtle_init(void *context) {
+    return hal_turtle_init(context);
+}
+
+void hal_turtle_get_canvas_size(double *out_width, double *out_height) {
+    if (out_width != NULL) {
+        *out_width = (double)g_width;
+    }
+    if (out_height != NULL) {
+        *out_height = (double)g_height;
+    }
+}
+
+bool hal_turtle_init(void *context) {
     int width = 800;
     int height = 600;
     const char *title = "Turtle Graphics (Raylib)";
@@ -50,8 +63,6 @@ bool hal_turtle_init(void *context, double *out_width, double *out_height) {
     ClearBackground(RAYWHITE);
     EndTextureMode();
 
-    *out_width = (double)width;
-    *out_height = (double)height;
     g_initialized = true;
 
     return true;

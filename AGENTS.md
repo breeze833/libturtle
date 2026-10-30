@@ -71,6 +71,12 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
    - In `hal_turtle_present()`, run an interactive waiting loop `while (!graphics_should_close() && !graphics_is_key_down(27))` paced with `graphics_wait_frame(60)` until window close or ESC is pressed.
    - Manage cursor visibility by non-destructively snapshotting (`canvas_get_image_data`) and restoring (`canvas_put_image_data`) the canvas area under the cursor before subsequent line draws.
 
+6. **Backend Link-Time Resolution & Initialization:**
+   - To prevent linking against an incorrect backend library when consumer code passes contexts as `void*`, each backend provides a uniquely named initializer (`raylib_turtle_init` in `turtle_backend_raylib.h` / `hal_raylib.c`, and `canvas_wasi_turtle_init` in `turtle_backend_canvas_wasi.h` / `hal_canvas_wasi.c`).
+   - Backend headers provide the convenience macro `#define turtle_begin(ctx) (<backend>_turtle_init(ctx) && turtle_begin_core())`.
+   - `turtle_begin_core(void)` lives in `src/turtle.c` and initializes platform-agnostic state machine variables, querying canvas dimensions via `hal_turtle_get_canvas_size()`.
+   - Do not bypass this mechanism by exposing a generic `turtle_begin()` symbol in `src/turtle.c`.
+
 ---
 
 ## 3. Build & Test Commands
@@ -98,8 +104,6 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
   # or make serve, then navigate to http://localhost:8000/examples/
   ```
 
-
-
 ---
 
 ## 4. Verification Checklist Before Committing Changes
@@ -108,5 +112,7 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 * [ ] Is internal math calculation using `double` and strictly respecting Cartesian $+Y$ North conventions?
 * [ ] Does the Makefile produce `libturtle_<backend>.a` cleanly under `build/<backend>/`?
 * [ ] Are `turtle_goto` and `turtle_backward` absent from `turtle.h` and `turtle.c`?
+* [ ] Does `turtle_begin` expand to backend-specific initializer and `turtle_begin_core` to enforce link-time resolution?
+
 
 

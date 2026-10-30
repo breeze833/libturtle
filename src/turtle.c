@@ -37,10 +37,8 @@ static inline void sync_cursor(void) {
     );
 }
 
-bool turtle_begin(void *context) {
-    if (!hal_turtle_init(context, &g_turtle.canvas_w, &g_turtle.canvas_h)) {
-        return false;
-    }
+bool turtle_begin_core(void) {
+    hal_turtle_get_canvas_size(&g_turtle.canvas_w, &g_turtle.canvas_h);
     g_turtle.is_visible = true;
     turtle_home();
     g_turtle.stroke = 2.0;

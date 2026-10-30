@@ -152,9 +152,10 @@ int main(void) {
 ## 📖 API Reference (`turtle.h`)
 
 ### Lifecycle & Viewport
-| Function | Description |
+| Function / Macro | Description |
 |---|---|
-| `bool turtle_begin(void *context)` | Initializes graphics backend and resets turtle to home `(0, 0)`. |
+| `turtle_begin(context)` | Convenience macro provided by backend headers. Calls backend-specific initializer (`raylib_turtle_init` / `canvas_wasi_turtle_init`) ensuring link-time backend resolution, followed by `turtle_begin_core()`. |
+| `bool turtle_begin_core(void)` | Platform-agnostic core initialization; queries canvas dimensions from HAL and resets state to home `(0, 0)`. |
 | `void turtle_end(void)` | Enters interactive event loop (Raylib & WASI) until closed or ESC pressed, then cleans up resources. |
 | `void turtle_clear(uint32_t color)` | Clears viewport with packed RGBA color. |
 | `void turtle_home(void)` | Returns turtle to `(0, 0)` with heading reset to $90.0^\circ$ (North). |

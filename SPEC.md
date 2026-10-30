@@ -38,9 +38,13 @@ Colors are packed 32-bit RGBA integer values (`0xRRGGBBAA`):
   - `TURTLE_WHITE`   (`0xFFFFFFFF`)
 
 ### 3.2 Lifecycle
-- `bool turtle_begin(void *context);`
-  - Initializes backend graphics with a platform-dependent context struct pointer.
-  - Queries physical viewport dimensions from HAL.
+- `turtle_begin(context)` (Macro)
+  - Defined in backend headers (`turtle_backend_raylib.h`, `turtle_backend_canvas_wasi.h`).
+  - Expands to `(<backend>_turtle_init(context) && turtle_begin_core())`.
+  - Enforces link-time backend resolution: code including a backend header will fail to link if linked against a different backend's library.
+- `bool turtle_begin_core(void);`
+  - Backend-independent initialization.
+  - Queries physical viewport dimensions from HAL via `hal_turtle_get_canvas_size()`.
   - Resets turtle state to home (`(0, 0)`, heading $90^\circ$, pen down, black, stroke 2.0).
 - `void turtle_end(void);`
   - Flushes graphics, enters interactive window/event loop (Raylib and WASI) until closed or ESC is pressed.
@@ -95,7 +99,8 @@ The core `turtle.c` performs coordinate transformation into physical screen spac
 
 Every backend must implement the following C signatures:
 ```c
-bool hal_turtle_init(void *context, double *out_width, double *out_height);
+bool hal_turtle_init(void *context);
+void hal_turtle_get_canvas_size(double *out_width, double *out_height);
 void hal_turtle_present(void);
 void hal_turtle_delay(double ms);
 void hal_turtle_set_cursor(double screen_x, double screen_y, double heading_deg, bool visible);
@@ -119,6 +124,8 @@ typedef struct {
     int target_fps;
 } turtle_raylib_context_t;
 
+bool raylib_turtle_init(void *context);
+#define turtle_begin(ctx) (raylib_turtle_init(ctx) && turtle_begin_core())
 ```
 
 
@@ -138,6 +145,9 @@ typedef struct {
     int height;
     const char *title;
 } turtle_canvas_wasi_context_t;
+
+bool canvas_wasi_turtle_init(void *context);
+#define turtle_begin(ctx) (canvas_wasi_turtle_init(ctx) && turtle_begin_core())
 ```
 
 * **Target Architecture:** `wasm32-wasi`
