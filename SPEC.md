@@ -164,7 +164,7 @@ Integrates with [`canvas-wasi`](https://github.com/breeze833/canvas-wasi) via `<
 * **Host Web Worker Bridge:**
 The host Web Worker environment (`examples/worker.js`) provides minimal WASI Preview 1 imports including `clock_time_get` for monotonic timing, and maps interactive input events (ESC key, window close) into WASI host graphics calls (`graphics_should_close`, `graphics_is_key_down`).
 * **Header Synchronization:**
-The required headers `graphics.h` and `graphics_canvas.h` are downloaded at build-time from the upstream `canvas-wasi` repository into `backend/canvas-wasi/include/`, with support for a local directory override via `CANVAS_WASI_DIR`.
+The required headers `graphics.h` and `graphics_canvas.h` are dynamically fetched at build-time on each WASI build from the upstream `canvas-wasi` repository (https://github.com/breeze833/canvas-wasi) into `backend/canvas-wasi/include/`, with support for a local directory override via `CANVAS_WASI_DIR`. These headers are untracked in git (gitignored) to prevent duplicate tracking across repositories.
 
 
 

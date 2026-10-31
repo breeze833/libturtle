@@ -22,8 +22,8 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 │   └── canvas-wasi/
 │       ├── include/
 │       │   ├── turtle_backend_canvas_wasi.h # WASI Canvas context definition
-│       │   ├── graphics.h                  # Synced from canvas-wasi
-│       │   └── graphics_canvas.h           # Synced from canvas-wasi
+│       │   ├── graphics.h                  # Dynamically fetched from canvas-wasi (gitignored)
+│       │   └── graphics_canvas.h           # Dynamically fetched from canvas-wasi (gitignored)
 │       └── hal_canvas_wasi.c          # canvas-wasi HAL implementation
 ├── examples/
 │   ├── raylib_demo.c                  # Native desktop example
@@ -66,7 +66,7 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 
 5. **canvas-wasi Integration:**
    - In `backend/canvas-wasi/hal_canvas_wasi.c`, implement the HAL using `<graphics_canvas.h>` and `<graphics.h>`.
-   - The required headers are synced at build-time from `breeze833/canvas-wasi` via the Makefile.
+   - The required headers are dynamically fetched at build-time from `breeze833/canvas-wasi` (or copied from `CANVAS_WASI_DIR`) via the Makefile on each WASI build and are gitignored to avoid repository duplication.
    - In `hal_turtle_delay()`, pace frames using a monotonic clock loop sliced into short frame intervals (up to 60 FPS / ~16ms) with `graphics_wait_frame()`, polling `graphics_should_close()` for prompt termination. Clean up resources and exit promptly if window close is requested.
    - In `hal_turtle_present()`, run an interactive waiting loop `while (!graphics_should_close() && !graphics_is_key_down(27))` paced with `graphics_wait_frame(60)` until window close or ESC is pressed.
    - Manage cursor visibility by non-destructively snapshotting (`canvas_get_image_data`) and restoring (`canvas_put_image_data`) the canvas area under the cursor before subsequent line draws.
@@ -113,6 +113,7 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 * [ ] Does the Makefile produce `libturtle_<backend>.a` cleanly under `build/<backend>/`?
 * [ ] Are `turtle_goto` and `turtle_backward` absent from `turtle.h` and `turtle.c`?
 * [ ] Does `turtle_begin` expand to backend-specific initializer and `turtle_begin_core` to enforce link-time resolution?
+* [ ] Are external headers `graphics.h` and `graphics_canvas.h` fetched dynamically at build-time and excluded from git tracking?
 
 
 

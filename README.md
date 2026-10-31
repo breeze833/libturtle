@@ -19,7 +19,7 @@ A cross-platform, modular educational C turtle graphics library designed for com
 - 🎨 **Packed 32-bit RGBA Colors**: Palette macros (`TURTLE_RED`, `TURTLE_BLUE`, etc.) and customizable `TURTLE_RGBA(r, g, b, a)`.
 - 🔌 **Pluggable Backends**:
   - **Raylib Desktop Backend (`raylib`)**: Native desktop window with configurable target FPS, dynamic pacing, prompt exit on window close during delay, and hardware-accelerated persistence via `RenderTexture2D`.
-  - **Canvas WASI Backend (`canvas-wasi`)**: Zero-dependency browser-hosted WebAssembly module driving HTML5 Canvas via [canvas-wasi](https://github.com/breeze833/canvas-wasi) with non-destructive cursor snapshot and restore, monotonic clock frame slicing, and interactive loop support.
+  - **Canvas WASI Backend (`canvas-wasi`)**: Zero-dependency browser-hosted WebAssembly module driving HTML5 Canvas via [canvas-wasi](https://github.com/breeze833/canvas-wasi) (with headers dynamically fetched at build time), non-destructive cursor snapshot and restore, monotonic clock frame slicing, and interactive loop support.
 - 🎓 **Pedagogical Design**: Core primitives are minimal and robust; higher-level routines like `turtle_goto()` and `turtle_backward()` are deliberately reserved as student programming assignments.
 
 ---
@@ -41,8 +41,8 @@ A cross-platform, modular educational C turtle graphics library designed for com
 │   └── canvas-wasi/                     # WebAssembly / WASI backend
 │       ├── include/
 │       │   ├── turtle_backend_canvas_wasi.h # Context definition
-│       │   ├── graphics.h               # Synced from canvas-wasi
-│       │   └── graphics_canvas.h        # Synced from canvas-wasi
+│       │   ├── graphics.h               # Dynamically fetched from canvas-wasi (gitignored)
+│       │   └── graphics_canvas.h        # Dynamically fetched from canvas-wasi (gitignored)
 │       └── hal_canvas_wasi.c            # canvas-wasi HAL implementation
 ├── examples/
 │   ├── raylib_demo.c                    # Native desktop demo
@@ -86,6 +86,7 @@ make run BACKEND=raylib
 - `python3` (to host the local demo web server)
 
 #### Build & Run in Browser
+*(Note: Required headers `graphics.h` and `graphics_canvas.h` are automatically fetched from GitHub on build, with optional local directory override via `CANVAS_WASI_DIR`)*
 ```bash
 # Build the WASM module and launch the local web server
 make run BACKEND=canvas-wasi
@@ -209,7 +210,7 @@ make run BACKEND=canvas-wasi  # Build demo and serve locally on port 8000
 make serve                    # Start local web server on port 8000
 
 make fetch-canvas-headers     # Synchronize latest canvas-wasi headers from GitHub
-make clean                    # Remove build artifacts
+make clean                    # Remove build directory and downloaded canvas-wasi headers
 ```
 
 ---
