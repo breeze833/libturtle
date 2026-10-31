@@ -49,9 +49,9 @@ HAL_OBJ  = $(BUILD_DIR)/hal.o
 
 all: $(LIB_TARGET)
 
-# Ensure canvas-wasi headers exist before building canvas-wasi
+# Ensure canvas-wasi headers are dynamically fetched each time we build canvas-wasi
 ifneq ($(filter $(BACKEND),canvas-wasi htmlcanvas),)
-$(HAL_OBJ): $(CANVAS_HEADERS)
+$(HAL_OBJ): fetch-canvas-headers
 endif
 
 $(BUILD_DIR):
@@ -95,16 +95,35 @@ fetch-canvas-headers:
 		cp "$(CANVAS_WASI_DIR)/include/graphics_canvas.h" backend/canvas-wasi/include/; \
 	else \
 		echo "Downloading latest canvas-wasi headers from GitHub..."; \
-		curl -fsSL $(CANVAS_WASI_URL)/graphics.h -o backend/canvas-wasi/include/graphics.h || wget -qO backend/canvas-wasi/include/graphics.h $(CANVAS_WASI_URL)/graphics.h; \
-		curl -fsSL $(CANVAS_WASI_URL)/graphics_canvas.h -o backend/canvas-wasi/include/graphics_canvas.h || wget -qO backend/canvas-wasi/include/graphics_canvas.h $(CANVAS_WASI_URL)/graphics_canvas.h; \
+		if curl -fsSL $(CANVAS_WASI_URL)/graphics.h -o backend/canvas-wasi/include/graphics.h.tmp || \
+		   wget -qO backend/canvas-wasi/include/graphics.h.tmp $(CANVAS_WASI_URL)/graphics.h; then \
+			mv backend/canvas-wasi/include/graphics.h.tmp backend/canvas-wasi/include/graphics.h; \
+		elif [ -f backend/canvas-wasi/include/graphics.h ]; then \
+			echo "Warning: Failed to download graphics.h, using existing file."; \
+			rm -f backend/canvas-wasi/include/graphics.h.tmp; \
+		else \
+			rm -f backend/canvas-wasi/include/graphics.h.tmp; \
+			echo "Error: Failed to download graphics.h from $(CANVAS_WASI_URL)/graphics.h"; \
+			exit 1; \
+		fi; \
+		if curl -fsSL $(CANVAS_WASI_URL)/graphics_canvas.h -o backend/canvas-wasi/include/graphics_canvas.h.tmp || \
+		   wget -qO backend/canvas-wasi/include/graphics_canvas.h.tmp $(CANVAS_WASI_URL)/graphics_canvas.h; then \
+			mv backend/canvas-wasi/include/graphics_canvas.h.tmp backend/canvas-wasi/include/graphics_canvas.h; \
+		elif [ -f backend/canvas-wasi/include/graphics_canvas.h ]; then \
+			echo "Warning: Failed to download graphics_canvas.h, using existing file."; \
+			rm -f backend/canvas-wasi/include/graphics_canvas.h.tmp; \
+		else \
+			rm -f backend/canvas-wasi/include/graphics_canvas.h.tmp; \
+			echo "Error: Failed to download graphics_canvas.h from $(CANVAS_WASI_URL)/graphics_canvas.h"; \
+			exit 1; \
+		fi; \
 	fi
 	@echo "canvas-wasi headers updated."
 
-$(CANVAS_HEADERS):
-	@$(MAKE) fetch-canvas-headers
+$(CANVAS_HEADERS): fetch-canvas-headers
 
 clean:
-	rm -rf build
+	rm -rf build $(CANVAS_HEADERS)
 
 help:
 	@echo "Available targets:"

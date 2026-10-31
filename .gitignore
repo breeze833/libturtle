@@ -2,3 +2,5 @@ build/
 *.o
 *.a
 *.wasm
+backend/canvas-wasi/include/graphics.h
+backend/canvas-wasi/include/graphics_canvas.h
