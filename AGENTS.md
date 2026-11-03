@@ -24,7 +24,9 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 │       │   ├── turtle_backend_canvas_wasi.h # WASI Canvas context definition
 │       │   ├── graphics.h                  # Dynamically fetched from canvas-wasi (gitignored)
 │       │   └── graphics_canvas.h           # Dynamically fetched from canvas-wasi (gitignored)
-│       └── hal_canvas_wasi.c          # canvas-wasi HAL implementation
+├── docs/
+│   ├── user_guide.md                  # User Guide & Public API Reference
+│   └── backend_guide.md               # Backend Developer Guide & HAL Specification
 ├── examples/
 │   ├── raylib_demo.c                  # Native desktop example
 │   ├── wasm_demo.c                    # WASI web canvas example
@@ -77,6 +79,12 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
    - `turtle_begin_core(void)` lives in `src/turtle.c` and initializes platform-agnostic state machine variables, querying canvas dimensions via `hal_turtle_get_canvas_size()`.
    - Do not bypass this mechanism by exposing a generic `turtle_begin()` symbol in `src/turtle.c`.
 
+7. **Documentation Parity & Separation of Concerns:**
+   - Keep user documentation strictly decoupled from backend developer documentation.
+   - Public API additions or modifications (`include/turtle.h`) must be documented in `docs/user_guide.md` and summarized concisely in `README.md`.
+   - HAL contract changes (`include/turtle_hal.h`) or backend context modifications must be documented in `docs/backend_guide.md` and `SPEC.md`.
+   - Keep `README.md` concise regarding API reference; detailed parameter types, return values, coordinate math, and tutorials belong in `docs/user_guide.md` and `docs/backend_guide.md`.
+
 ---
 
 ## 3. Build & Test Commands
@@ -114,6 +122,8 @@ You are tasked with maintaining, implementing, and validating the C Turtle Graph
 * [ ] Are `turtle_goto` and `turtle_backward` absent from `turtle.h` and `turtle.c`?
 * [ ] Does `turtle_begin` expand to backend-specific initializer and `turtle_begin_core` to enforce link-time resolution?
 * [ ] Are external headers `graphics.h` and `graphics_canvas.h` fetched dynamically at build-time and excluded from git tracking?
+* [ ] Are documentation files in `docs/` kept synchronized with API and HAL changes?
+* [ ] Is `README.md` kept concise, delegating detailed reference to `docs/`?
 
 
 

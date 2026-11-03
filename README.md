@@ -44,6 +44,9 @@ A cross-platform, modular educational C turtle graphics library designed for com
 │       │   ├── graphics.h               # Dynamically fetched from canvas-wasi (gitignored)
 │       │   └── graphics_canvas.h        # Dynamically fetched from canvas-wasi (gitignored)
 │       └── hal_canvas_wasi.c            # canvas-wasi HAL implementation
+├── docs/
+│   ├── user_guide.md                    # User Guide & Public API Reference
+│   └── backend_guide.md                 # Backend Developer Guide & HAL Specification
 ├── examples/
 │   ├── raylib_demo.c                    # Native desktop demo
 │   ├── wasm_demo.c                      # WebAssembly WASI demo
@@ -54,6 +57,14 @@ A cross-platform, modular educational C turtle graphics library designed for com
 ├── AGENTS.md                            # Autonomous agent development instructions
 └── README.md
 ```
+
+---
+
+## 📚 Documentation
+
+Detailed documentation is available in the [`docs/`](docs/) directory:
+- 📖 **[User Guide & API Reference](docs/user_guide.md)**: A complete guide for students, teachers, and application developers. Covers coordinate systems, high-level turtle commands, backend context setup, progressive animation, and implementation recipes for omitted primitives like `turtle_goto`.
+- 🛠️ **[Backend Developer Guide & HAL Specification](docs/backend_guide.md)**: An in-depth guide for engine contributors and graphics developers. Details the decoupled architecture, link-time backend resolution pattern, HAL contract (`turtle_hal.h`), persistence strategies, cursor overlay invariants, and a step-by-step tutorial for implementing new backends.
 
 ---
 
@@ -150,48 +161,22 @@ int main(void) {
 
 ---
 
-## 📖 API Reference (`turtle.h`)
+## 📖 API Quick Reference
 
-### Lifecycle & Viewport
-| Function / Macro | Description |
-|---|---|
-| `turtle_begin(context)` | Convenience macro provided by backend headers. Calls backend-specific initializer (`raylib_turtle_init` / `canvas_wasi_turtle_init`) ensuring link-time backend resolution, followed by `turtle_begin_core()`. |
-| `bool turtle_begin_core(void)` | Platform-agnostic core initialization; queries canvas dimensions from HAL and resets state to home `(0, 0)`. |
-| `void turtle_end(void)` | Enters interactive event loop (Raylib & WASI) until closed or ESC pressed, then cleans up resources. |
-| `void turtle_clear(uint32_t color)` | Clears viewport with packed RGBA color. |
-| `void turtle_home(void)` | Returns turtle to `(0, 0)` with heading reset to $90.0^\circ$ (North). |
-| `void turtle_delay(double ms)` | Flushes canvas and pauses for `ms` milliseconds for progressive drawing while handling window close / exit promptly. |
+For complete descriptions, parameter types, coordinate math, and tutorials, see the **[User Guide & API Reference](docs/user_guide.md)**. For HAL and backend integration details, see the **[Backend Developer Guide](docs/backend_guide.md)**.
 
-### Steering & Movement
-| Function | Description |
-|---|---|
-| `void turtle_forward(double steps)` | Moves along current heading (negative values move backward without rotating). |
-| `void turtle_turn(double deg)` | Rotates heading counter-clockwise by `deg` degrees. |
-| `void turtle_turn_left(double deg)` | Counter-clockwise turn alias (`turtle_turn(deg)`). |
-| `void turtle_turn_right(double deg)` | Clockwise turn (`turtle_turn(-deg)`). |
+| Category | Functions & Macros | Description |
+|---|---|---|
+| **Lifecycle** | `turtle_begin(ctx)`, `turtle_end()` | Start backend & state machine; enter interactive loop & cleanup |
+| **Canvas** | `turtle_clear(color)`, `turtle_home()`, `turtle_delay(ms)` | Clear background; reset to center; flush & pause for animation |
+| **Steering** | `turtle_forward(steps)`, `turtle_turn(deg)`<br>`turtle_turn_left(deg)`, `turtle_turn_right(deg)` | Move along heading (negative = reverse); rotate CCW / CW |
+| **Pen** | `turtle_pen_down()`, `turtle_pen_up()`, `turtle_is_pen_down()`<br>`turtle_pen_stroke(w)`, `turtle_pen_color(c)`, `turtle_pen(w, c, down)` | Lower/raise pen; query pen state; configure stroke width and color |
+| **Cursor** | `turtle_set_visible(bool)`, `turtle_is_visible()` | Show/hide the on-screen turtle indicator |
+| **Inspection** | `turtle_get_x()`, `turtle_get_y()`, `turtle_get_heading()` | Query current Cartesian coordinates and heading angle $[0.0, 360.0)$ |
+| **Colors** | `TURTLE_RGBA(r, g, b, a)`, `TURTLE_BLACK`, `TURTLE_WHITE`, ... | 32-bit packed `0xRRGGBBAA` color constructor and standard palette |
 
-### Pen Management
-| Function | Description |
-|---|---|
-| `void turtle_pen_down(void)` | Lowers the pen (drawing enabled). |
-| `void turtle_pen_up(void)` | Lifts the pen (movement without drawing). |
-| `int turtle_is_pen_down(void)` | Returns `1` if pen is down, `0` otherwise. |
-| `void turtle_pen_stroke(double stroke)` | Sets stroke width in pixels. |
-| `void turtle_pen_color(uint32_t color)` | Sets stroke color in `0xRRGGBBAA` format. |
-| `void turtle_pen(double stroke, uint32_t color, int is_down)` | Configures all pen attributes at once. |
-
-### Cursor Visibility
-| Function | Description |
-|---|---|
-| `void turtle_set_visible(bool visible)` | Shows (`true`) or hides (`false`) the stylized turtle cursor (default: shown). |
-| `bool turtle_is_visible(void)` | Returns current visibility state of the turtle cursor. |
-
-### State Inspection
-| Function | Description |
-|---|---|
-| `double turtle_get_x(void)` | Current math $X$ coordinate. |
-| `double turtle_get_y(void)` | Current math $Y$ coordinate. |
-| `double turtle_get_heading(void)` | Current heading angle in degrees $[0.0, 360.0)$. |
+> [!NOTE]
+> Higher-level navigation routines such as `turtle_goto(x, y)` and `turtle_backward(steps)` are intentionally omitted from the core library as pedagogical assignments. See [Implementing Missing Primitives](docs/user_guide.md#5-pedagogical-notes-missing-primitives) in the User Guide for recipes.
 
 ---
 

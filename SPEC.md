@@ -7,6 +7,10 @@ Initial targets:
 1. **Raylib Backend (`raylib`)**: Desktop native rendering loop using hardware-accelerated drawing.
 2. **Canvas WASI Backend (`canvas-wasi`)**: Browser-hosted WASI binary driving an HTML5 `<canvas>` via `canvas-wasi` (`graphics_canvas.h`).
 
+Comprehensive guides and documentation are maintained in the [`docs/`](docs/) directory:
+- **[User Guide & API Reference](docs/user_guide.md)**: Public API documentation, Cartesian coordinate system, context initialization, progressive animation, and pedagogical implementation guides.
+- **[Backend Developer Guide & HAL Specification](docs/backend_guide.md)**: Hardware Abstraction Layer contract (`turtle_hal.h`), link-time resolution pattern, persistence and cursor invariants, frame pacing, and new backend tutorial.
+
 ---
 
 ## 2. Mathematical & Coordinate System
